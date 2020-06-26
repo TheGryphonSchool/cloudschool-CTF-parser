@@ -8,7 +8,6 @@ def process_ctf(ctf_path):
         # Prepare XML tree
         tree = ET.parse(ctf_path)
         root_node = tree.getroot()
-        pupils = root_node.find('CTFpupilData')
         source_name = source_school(root_node)
         
         if is_data_missing(root_node) and yes_no_q("Do you want to abort?"):
@@ -17,7 +16,7 @@ def process_ctf(ctf_path):
         fixed_case_cnt = repair_case_where_appropriate(root_node)
 
         fixed_empty_cnt = trim_empty_nodes(root_node, source_name)
-    except Exception as e:
+    except Exception as _e:
         traceback.print_exc()
         
 
@@ -136,7 +135,7 @@ def get_output_dir(root):
 
 def ac_year(root_node):
     """Returns the academic year of the first student under the passed node"""
-    dob_node = pupils.find('.//Pupil/DOB')
+    dob_node = root_node.find('.//Pupil/DOB')
     if dob_node is None:
         raise NameError('Pupils are missing their DOBs; this CTF is invalid')
     dob = date.fromisoformat(dob_node.text)
