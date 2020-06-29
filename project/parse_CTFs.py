@@ -1,5 +1,32 @@
-def process_ctf(ctf_path):
-    """Parse the XML tree, call patching methods and write repaired CTF"""
+#!/usr/bin/python3
+
+import re
+import os
+
+from tkinter import filedialog
+from tkinter import *
+import xml.etree.ElementTree as ET
+from datetime import date
+
+def process_ctf(ctf_path: str) -> bool:
+    """Parse the XML tree, call patching methods and write repaired CTF
+    
+    Tries to open CTF file presumend to be at passed path. Checks whether CTF
+    is complete and asks the user whether they want to abort if not.
+    Finds the appropriate location and writes a new, fixed CTF there. The
+    original is unchanged, but renamed
+    Delegates:
+    Removing any optional nodes that are empty 
+    Making proper names proper case
+
+    Args:
+        ctf_path: The full path of the CTF file to be processed
+    
+    Returns:
+        A Boolean indicating whether the process was successful (Explicit
+        abortion by the user is still considered unsuccessful).
+    """
+
     import traceback
 
     print('Parsing', ctf_path.rsplit('/', 1)[-1], '...')
@@ -37,7 +64,16 @@ def process_ctf(ctf_path):
         print('CTF parsing error:', err, '\n')
         return False
 
-def is_data_missing(root_node):
+def is_data_missing(root_node: object) -> bool:
+    """Checks whether a XML tree is a claims to be a `full` CTF file
+
+    Args:
+        root_node: XML Element, expected to be the root of a CTF file
+    
+    Returns:
+        False if a DocumentQualifier node is found with value `full`, else True
+    """
+
     doc_qual = root_node.findtext('.//DocumentQualifier')
     if doc_qual is None:
         print("File is missing its DocumentQualifier tag; import will"
@@ -56,7 +92,17 @@ def is_data_missing(root_node):
           "fail.")
     return True
 
-def yes_no_q(question):
+def yes_no_q(question: str) -> bool:
+    """Asks user a yes/no question 3 times, assumes no on 3rd failure
+
+    Args:
+        question: A yes/no question to put to the user. Do not include options;
+            '(y/n)' will be appended to the question automatically
+    Returns:
+        Boolean representing the user's choice, or False if they fail 3 times
+        to answer with a 'y' or 'no'.
+    """
+    
     yes_regex = re.compile('[yY]')
     no_regex = re.compile('[nN]')
     attempts = 0
@@ -68,11 +114,16 @@ def yes_no_q(question):
         if no_regex.search(user_choice):
             return False
 
-def repair_case_where_appropriate(parent_node):
+def repair_case_where_appropriate(parent_node: object) -> int:
     """Title case any upper-case names under the passed node
 
-    Return count of fixes.
+    Args:
+        parent_node: An XML node that may contain child-nodes containing
+            proper names
+    Returns:
+        Integer count of the number of nodes whose case has been fixed
     """
+
     fixed_cnt = 0
     for name_node in list_suspectly_cased_nodes(parent_node):
         name = name_node.text
@@ -81,21 +132,36 @@ def repair_case_where_appropriate(parent_node):
             fixed_cnt += 1
     return fixed_cnt
 
-def list_suspectly_cased_nodes(parent_node):
-    """Returns a list of all nodes that are sometimes incorrectly upper-cased"""
+def list_suspectly_cased_nodes(parent_node: object) -> list:
+    """Returns list of child nodes containing proper names
+    
+    Args:
+        parent_node: An XML node that may contain child-nodes containing
+            proper names
+    Returns:
+        List contining all nodes containing proper names
+    """
+
     name_nodes = []
     for tag in ['Surname', 'Forename', 'PreferredSurname', 'PreferredForename',
                 'MiddleNames', 'FormerSurname', 'SchoolName']:
         name_nodes += parent_node.findall('.//' + tag)
     return name_nodes
 
-def trim_empty_nodes(parent_node, source_name):
+def trim_empty_nodes(parent_node: object, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
 
     Each learner MAY have the source school as a School node under SchoolHistory.
     These nodes MAY have LeavingDate and RemovalGrounds child nodes, but if
-    they're blank Progresso gets upset. So we look for blanks and delete them. 
+    they're blank Progresso gets upset. So we look for blanks and delete them.
+    Args:
+        parent_node: An XML node that may contain child-nodes containing
+            people's names
+        source_name: String representing the name (not path) of the XML file
+    Returns:
+        Integer count of the number of nodes trimmed
     """
+
     fixed_cnt = 0
     for source_in_hist in source_as_previouses(parent_node, source_name):
         for tag in ['LeavingDate', 'RemovalGrounds']:
@@ -105,20 +171,21 @@ def trim_empty_nodes(parent_node, source_name):
                 fixed_cnt += 1
     return fixed_cnt
 
-def source_as_previouses(root_node, source_name):
+def source_as_previouses(root_node: object, source_name: str):
+    """List source school appearances in students' school histories"""
     return  root_node.findall(
         # use " over ' in Xpath predicate because some school names include '
         f".//SchoolHistory/School/[SchoolName=\"{source_name}\"]")
 
-def determine_output_path(input_path, source_name, root_node):
-    """Returns string of the rlative path of the output file"""
+def determine_output_path(input_path: str, source_name: str, root_node) -> str:
+    """Returns string of the relative path of the output file"""
     output_name = (input_path.rsplit('/', 1)[-1]
                    .replace('.', f'_{source_name}.'))
     output_dir = f'T:\CMIS\CTF Files\{get_output_dir(root_node)}'
     os.makedirs(output_dir, exist_ok=True)
     return f'{output_dir}\{output_name}'
 
-def get_output_dir(root):
+def get_output_dir(root: object) -> str:
     """Finds the name of the appropriate folder to store the outputted CTF in
 
     If the first student with a specified year is in year 6, returns the
@@ -133,8 +200,14 @@ def get_output_dir(root):
         return cohort_folder(12)
     return "CTF_In"
 
-def ac_year(root_node):
-    """Returns the academic year of the first student under the passed node"""
+def ac_year(root_node: object) -> int:
+    """Returns the academic year of the first student under the passed node
+    
+    Raises:
+        NameError if any students don't have DOBs. The MIS will not accept the
+            CTF if this is the case.
+    """
+
     dob_node = root_node.find('.//Pupil/DOB')
     if dob_node is None:
         raise NameError('Pupils are missing their DOBs; this CTF is invalid')
@@ -144,7 +217,7 @@ def ac_year(root_node):
     ac_start_year = today.year - (1 if today.month < 9 else 0)
     return ac_start_year - year_started_school
 
-def are_joining_mid_year(root):
+def are_joining_mid_year(root: object) -> bool:
     """Return True if students are joining next academic year (not this year)"""
     # List the nodes where the source school appears in a pupil's school history
     source_in_hists = source_as_previouses(root, source_school(root))
@@ -162,38 +235,32 @@ def are_joining_mid_year(root):
     # Otherwise, ask
     return yes_no_q("Are these students joining MID-YEAR?")
 
-def cohort_folder(year_group):
+def cohort_folder(year_group: int) -> str:
     """Returns the (conventional) name of the folder for the next yr 7 cohort"""
     return f'CTF_Year{year_group:02}_{escpd_next_ac_year()}'
 
-def escpd_next_ac_year():
+def escpd_next_ac_year() -> str:
     """eg Aug '19 and Sep '19 give 2019_2020, but Oct '19 gives 2020_2021
 
     Desirable because occasionally we get CTFs in September for members of new
     cohort who already started that month.
     """
+    
     d = date.today()
     year = d.year
     return f'{year}_{year + 1}' if d.month < 10 else f'{year + 1}_{year + 2}'
 
-def source_school(root_node):
+def source_school(root_node: object) -> str:
     node = root_node.find(".//SourceSchool//SchoolName")
     return '' if node is None else node.text
 
-def escape_source_school(source_school):
+def escape_source_school(source_school: str) -> str:
     return source_school.casefold().replace(' ', '_').replace('.', '')
 
-def plural(count):
+def plural(count: int) -> str:
     return 's' if count > 1 else ''
 
 if __name__ == '__main__':
-    from tkinter import filedialog
-    from tkinter import *
-    import re
-    import xml.etree.ElementTree as ET
-    import os
-    from datetime import date
-
     root = Tk()
     root.withdraw()
     ctf_s = filedialog.askopenfilenames(initialdir = "..",
