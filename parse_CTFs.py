@@ -190,7 +190,7 @@ def determine_output_path(input_path: str,
 
 def config_parent_dir() -> str:
     try:
-        full_path = os.path.join(os.path.dirname(__file__), '.config.json')
+        full_path = os.path.join(os.path.dirname(__file__), 'config.json')
         with open(full_path) as config_file:
             config = json.load(config_file)
             return config['destinationParentDir']

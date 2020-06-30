@@ -132,7 +132,7 @@ dmypy.json
 commit.txt
 
 # Config file
-project/.config.json
+config.json
 
 # VS Code
 .vscode/
