@@ -133,3 +133,6 @@ commit.txt
 
 # Config file
 project/.config.json
+
+# VS Code
+.vscode/

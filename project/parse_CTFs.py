@@ -1,7 +1,6 @@
-#!/usr/bin/python3
-
 import re
 import os
+import json
 
 from tkinter import filedialog
 from tkinter import *
@@ -151,9 +150,10 @@ def list_suspectly_cased_nodes(parent_node: object) -> list:
 def trim_empty_nodes(parent_node: object, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
 
-    Each learner MAY have the source school as a School node under SchoolHistory.
-    These nodes MAY have LeavingDate and RemovalGrounds child nodes, but if
-    they're blank Progresso gets upset. So we look for blanks and delete them.
+    Each learner MAY have the source school as a School node under their
+    SchoolHistory node. And these nodes MAY have LeavingDate and RemovalGrounds
+    child nodes, but if they're blank Progresso gets upset. So we look for
+    blanks and delete them.
     Args:
         parent_node: An XML node that may contain child-nodes containing
             people's names
@@ -177,13 +177,25 @@ def source_as_previouses(root_node: object, source_name: str):
         # use " over ' in Xpath predicate because some school names include '
         f".//SchoolHistory/School/[SchoolName=\"{source_name}\"]")
 
-def determine_output_path(input_path: str, source_name: str, root_node) -> str:
+def determine_output_path(input_path: str,
+                          source_name: str,
+                          root_node: object) -> str:
     """Returns string of the relative path of the output file"""
     output_name = (input_path.rsplit('/', 1)[-1]
                    .replace('.', f'_{source_name}.'))
-    output_dir = f'T:\CMIS\CTF Files\{get_output_dir(root_node)}'
+    output_dir = os.path.join((config_parent_dir() or 'T:/CMIS/CTF Files/'),
+                              get_output_dir(root_node))
     os.makedirs(output_dir, exist_ok=True)
-    return f'{output_dir}\{output_name}'
+    return os.path.join(output_dir, output_name)
+
+def config_parent_dir() -> str:
+    try:
+        full_path = os.path.join(os.path.dirname(__file__), '.config.json')
+        with open(full_path) as config_file:
+            config = json.load(config_file)
+            return config['destinationParentDir']
+    except (FileNotFoundError, KeyError):
+        return ''
 
 def get_output_dir(root: object) -> str:
     """Finds the name of the appropriate folder to store the outputted CTF in
