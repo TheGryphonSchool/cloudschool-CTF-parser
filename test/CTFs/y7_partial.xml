@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CTfile>
+<Header>
+<DocumentName>Common Transfer File</DocumentName>
+<CTFversion>19.0</CTFversion>
+<DateTime>2020-04-30T07:24:22</DateTime>
+<DocumentQualifier>partial</DocumentQualifier>
+<SupplierID>SIMS</SupplierID>
+<SourceSchool>
+<LEA>933</LEA>
+<Estab>3281</Estab>
+<URN>123818</URN>
+<SchoolName>Lil Old Prim. School</SchoolName>
+<AcademicYear>2019</AcademicYear>
+</SourceSchool>
+<DestSchool>
+<LEA>838</LEA>
+<Estab>4512</Estab>
+<URN>XXXXXX</URN>
+</DestSchool>
+</Header>
+<CTFpupilData>
+<Pupil>
+<UPN>J933207636549</UPN>
+<Surname>Jagger</Surname>
+<Forename>Mick</Forename>
+<DOB>2009-06-07</DOB>
+<Gender>M</Gender>
+<BasicDetails>
+<PreferredSurname>Jagger</PreferredSurname>
+<PreferredForename>Mick</PreferredForename>
+<NCyearActual>6</NCyearActual>
+<Ethnicity>WBRI</Ethnicity>
+<EthnicitySource>P</EthnicitySource>
+<Languages>
+<Type>
+<LanguageType>F</LanguageType>
+<Language>ENG</Language>
+</Type>
+</Languages>
+<ServiceChild>N</ServiceChild><MedicalFlag>true</MedicalFlag>
+<EnrolStatus>C</EnrolStatus>
+<SuppInfo>
+<SuppID>SIMS</SuppID>
+<BirthCertificate>false</BirthCertificate>
+<Religion>OT</Religion>
+</SuppInfo>
+</BasicDetails>
+
+<Address>
+<BS7666Address>
+<PAON>          Jaggerden</PAON>
+<Street>Jagger End</Street>
+<Town>Jaggminster</Town>
+</BS7666Address><County>Dorset</County>
+<PostCode>DT9 6NL</PostCode>
+<Country>United Kingdom</Country>
+
+</Address>
+<Attendance>
+<YearData>
+<Year>2018</Year>
+<LEA>933</LEA>
+<Estab>3281</Estab>
+<URN>123818</URN>
+<SchoolName>Lil Old Prim. School</SchoolName>
+<SessionsPossible>378</SessionsPossible>
+<SessionsAuthorised>7</SessionsAuthorised>
+<SessionsAttended>371</SessionsAttended>
+<SessionsUnauthorised>0</SessionsUnauthorised>
+</YearData>
+</Attendance>
+<SchoolHistory>
+<School>
+<LEA>933</LEA>
+<Estab>3281</Estab>
+<URN>123818</URN>
+<SchoolName>Lil Old Prim. School</SchoolName>
+<EntryDate>2018-09-03</EntryDate>
+</School>
+</SchoolHistory>
+<SuppInfo>
+<SuppID>SIMS</SuppID>
+<BirthCertificate>false</BirthCertificate>
+<Religion>OT</Religion>
+</SuppInfo>
+</Pupil>
+</CTFpupilData>
+</CTfile>

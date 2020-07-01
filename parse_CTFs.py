@@ -138,7 +138,7 @@ def list_suspectly_cased_nodes(parent_node: object) -> list:
         parent_node: An XML node that may contain child-nodes containing
             proper names
     Returns:
-        List contining all nodes containing proper names
+        List of all nodes containing proper names
     """
 
     name_nodes = []
@@ -271,6 +271,11 @@ def escape_source_school(source_school: str) -> str:
 
 def plural(count: int) -> str:
     return 's' if count > 1 else ''
+
+def add_xml_nodes_from_dict(parent: object, **kwargs: str):
+    for key in kwargs:
+        child = ET.SubElement(parent, key)
+        child.text = kwargs[key]
 
 if __name__ == '__main__':
     root = Tk()
