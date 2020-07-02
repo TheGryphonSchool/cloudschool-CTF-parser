@@ -42,6 +42,8 @@ def process_ctf(ctf_path: str) -> bool:
         fixed_case_cnt = repair_case_where_appropriate(root_node)
 
         fixed_empty_cnt = trim_empty_nodes(root_node, source_name)
+
+        fixed_phone_numbers = remove_spaces_from_phone_numbers(root_node)
     except Exception as _e:
         traceback.print_exc()
         
@@ -52,9 +54,14 @@ def process_ctf(ctf_path: str) -> bool:
         output_path = determine_output_path(ctf_path, escpd_src_name, root_node)
         tree.write(output_path)
         if fixed_case_cnt > 0:
-            print(f"Case fixed for {fixed_case_cnt} name{plural(fixed_case_cnt)}")
+            print(f""""Case fixed for {fixed_case_cnt}
+                  name{plural(fixed_case_cnt)}""")
         if fixed_empty_cnt > 0:
-            print(f"Trimmed {fixed_empty_cnt} empty field{plural(fixed_empty_cnt)}")
+            print(f"""Trimmed {fixed_empty_cnt}
+                  empty field{plural(fixed_empty_cnt)}""")
+        if fixed_phone_numbers > 0:
+            print(f"""Removed whitespace from {fixed_phone_numbers}
+                  phone number{plural(fixed_phone_numbers)}""")
         print('Output to:', output_path, '\n')
         os.rename(ctf_path,
                   ctf_path.replace('.', f'_{escpd_src_name}_original.'))
@@ -146,6 +153,22 @@ def list_suspectly_cased_nodes(parent_node: object) -> list:
                 'MiddleNames', 'FormerSurname', 'SchoolName']:
         name_nodes += parent_node.findall('.//' + tag)
     return name_nodes
+
+def remove_spaces_from_phone_numbers(xml_tree: object) -> int:
+    """Removes all padding and internal spaces from nodes named 'PhoneNo'
+    
+    Args:
+        xml_tree: An XML node that may have children with 'PhoneNo' tags
+    Returns:
+        count of the phone numbers with spaces in that have been removed
+    """
+    fixed_count = 0
+    for phone_node in xml_tree.findall('.//PhoneNo'):
+        if phone_node.text.find(' ') >= 0:
+            fixed_count += 1
+            phone_node.text = phone_node.text.replace(' ', '')
+    return fixed_count
+    
 
 def trim_empty_nodes(parent_node: object, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
