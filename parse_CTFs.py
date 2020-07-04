@@ -39,11 +39,13 @@ def process_ctf(ctf_path: str) -> bool:
         if is_data_missing(root_node) and yes_no_q("Do you want to abort?"):
             return False
 
-        fixed_case_cnt = repair_case_where_appropriate(root_node)
+        fixed_cases = repair_case_where_appropriate(root_node)
 
-        fixed_empty_cnt = trim_empty_nodes(root_node, source_name)
+        fixed_empties = trim_empty_nodes(root_node, source_name)
 
         fixed_phone_numbers = remove_spaces_from_phone_numbers(root_node)
+
+        fixed_surnames = ensure_surnames_are_legal(root_node)
     except Exception as _e:
         traceback.print_exc()
         
@@ -53,20 +55,21 @@ def process_ctf(ctf_path: str) -> bool:
         escpd_src_name = escape_source_school(source_name)
         output_path = determine_output_path(ctf_path, escpd_src_name, root_node)
         tree.write(output_path)
-        if fixed_case_cnt > 0:
-            print(f""""Case fixed for {fixed_case_cnt}
-                  name{plural(fixed_case_cnt)}""")
-        if fixed_empty_cnt > 0:
-            print(f"""Trimmed {fixed_empty_cnt}
-                  empty field{plural(fixed_empty_cnt)}""")
+        if fixed_cases > 0:
+            print(f"Case fixed for {fixed_cases} name{plural(fixed_cases)}")
+        if fixed_empties > 0:
+            print(f"Trimmed {fixed_empties} empty field{plural(fixed_empties)}")
         if fixed_phone_numbers > 0:
-            print(f"""Removed whitespace from {fixed_phone_numbers}
-                  phone number{plural(fixed_phone_numbers)}""")
+            print(f"Removed whitespace from {fixed_phone_numbers}" +
+                  f"phone number{plural(fixed_phone_numbers)}")
+        if fixed_surnames > 0:
+            s = plural(fixed_surnames)
+            print(f"Replaced {fixed_surnames} surname{s} with legal surname{s}")
         print('Output to:', output_path, '\n')
         os.rename(ctf_path,
                   ctf_path.replace('.', f'_{escpd_src_name}_original.'))
         return True
-    except NameError as err:
+    except ValueError as err:
         print('CTF parsing error:', err, '\n')
         return False
 
@@ -168,7 +171,46 @@ def remove_spaces_from_phone_numbers(xml_tree: object) -> int:
             fixed_count += 1
             phone_node.text = phone_node.text.replace(' ', '')
     return fixed_count
+
+def ensure_surnames_are_legal(tree: ET.Element) -> int:
+    """Overwrites PreferredSurname nodes with Surnames if they differ
     
+    During import, progresso maps Surname nodes to the Legal Surname field,
+    and PreferredSurname nodes to the Surname field. Some schools may not like
+    this behaviour and prefer to use the Surname node value for everything.
+    If a Pupil record is missing the Surname or PreferredSurname node, it will
+    be created, copying the value from the present node.
+    Args:
+        tree: An XML node whose descendents may include Surname and
+            PreferredSurname nodes
+    Returns:
+        Integer count of the number of nodes updated or created
+    Raises:
+        ValueError if any students don't have surnames. The MIS will not accept
+            the CTF if this is the case.
+    """
+
+    fixed_count = 0
+    nameless_UPNs = []
+    all_pupils = tree.findall('.//Pupil')
+    fixed_count = len(all_pupils)
+    for pupil_node in all_pupils:
+        surname_tags = ['Surname', 'PreferredSurname']
+        surname_nodes = [pupil_node.find(tag) for tag in surname_tags]
+        missing = [i for i, x in enumerate(surname_nodes) if x is None]
+        if len(missing) == 2:
+            nameless_UPNs.append(pupil_node.find('UPN').text)
+        elif len(missing) == 1:
+            new_name_node = ET.SubElement(pupil_node, surname_tags[missing[0]])
+            new_name_node.text = surname_nodes[missing[0] ^ 1].text
+        elif surname_nodes[1].text != surname_nodes[0].text:
+            surname_nodes[1].text = surname_nodes[0].text
+        else:
+            fixed_count -= 1
+    if len(nameless_UPNs) > 0:
+        raise ValueError('Students with these UPNs have no surnames: ' +
+            f"{ ', '.join(nameless_UPNs) }. This CTF is invalid.")
+    return fixed_count
 
 def trim_empty_nodes(parent_node: object, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
@@ -239,13 +281,13 @@ def ac_year(root_node: object) -> int:
     """Returns the academic year of the first student under the passed node
     
     Raises:
-        NameError if any students don't have DOBs. The MIS will not accept the
+        ValueError if any students don't have DOBs. The MIS will not accept the
             CTF if this is the case.
     """
 
     dob_node = root_node.find('.//Pupil/DOB')
     if dob_node is None:
-        raise NameError('Pupils are missing their DOBs; this CTF is invalid')
+        raise ValueError('Pupils are missing their DOBs; this CTF is invalid')
     dob = date.fromisoformat(dob_node.text)
     year_started_school = dob.year + (4 if dob.month < 9 else 5)
     today = date.today()

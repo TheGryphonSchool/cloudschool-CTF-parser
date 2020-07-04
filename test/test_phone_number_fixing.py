@@ -20,8 +20,7 @@ def phone_test_nodes() -> ET.Element:
         'Should': { 'be': 'ignored' }
         }))
 
-class TestPhoneNumberFixing:
-    def test_fixes_phone_number_nodes(self, phone_test_nodes):
-        assert 4 == parser.remove_spaces_from_phone_numbers(phone_test_nodes)
-        for node in phone_test_nodes.findall('.//PhoneNo'):
-            assert node.text == CORRECT_NUMBER
+def test_fixes_phone_number_nodes(phone_test_nodes):
+    assert 4 == parser.remove_spaces_from_phone_numbers(phone_test_nodes)
+    for node in phone_test_nodes.findall('.//PhoneNo'):
+        assert node.text == CORRECT_NUMBER
