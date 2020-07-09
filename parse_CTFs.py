@@ -2,8 +2,7 @@ import re
 import os
 import json
 
-from tkinter import filedialog
-from tkinter import *
+from tkinter import Tk, filedialog
 import xml.etree.ElementTree as ET
 from datetime import date
 
@@ -351,6 +350,7 @@ if __name__ == '__main__':
     if len(ctf_s) == 0:
         print("CTF parsing aborted")
     else:
+        # Process each CTF, collecting a record of successes and failures
         outcomes = list(map(process_ctf, ctf_s))
         good_count = outcomes.count(True)
         out_count = len(outcomes)
