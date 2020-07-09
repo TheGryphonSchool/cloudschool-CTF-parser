@@ -72,7 +72,7 @@ def process_ctf(ctf_path: str) -> bool:
         print('CTF parsing error:', err, '\n')
         return False
 
-def is_data_missing(root_node: object) -> bool:
+def is_data_missing(root_node: ET.Element) -> bool:
     """Checks whether a XML tree is a claims to be a `full` CTF file
 
     Args:
@@ -122,7 +122,7 @@ def yes_no_q(question: str) -> bool:
         if no_regex.search(user_choice):
             return False
 
-def repair_case_where_appropriate(parent_node: object) -> int:
+def repair_case_where_appropriate(parent_node: ET.Element) -> int:
     """Title case any upper-case names under the passed node
 
     Args:
@@ -140,7 +140,7 @@ def repair_case_where_appropriate(parent_node: object) -> int:
             fixed_cnt += 1
     return fixed_cnt
 
-def list_suspectly_cased_nodes(parent_node: object) -> list:
+def list_suspectly_cased_nodes(parent_node: ET.Element) -> list:
     """Returns list of child nodes containing proper names
     
     Args:
@@ -156,7 +156,7 @@ def list_suspectly_cased_nodes(parent_node: object) -> list:
         name_nodes += parent_node.findall('.//' + tag)
     return name_nodes
 
-def remove_spaces_from_phone_numbers(xml_tree: object) -> int:
+def remove_spaces_from_phone_numbers(xml_tree: ET.Element) -> int:
     """Removes all padding and internal spaces from nodes named 'PhoneNo'
     
     Args:
@@ -211,7 +211,7 @@ def ensure_surnames_are_legal(tree: ET.Element) -> int:
             f"{ ', '.join(nameless_UPNs) }. This CTF is invalid.")
     return fixed_count
 
-def trim_empty_nodes(parent_node: object, source_name: str) -> int:
+def trim_empty_nodes(parent_node: ET.Element, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
 
     Each learner MAY have the source school as a School node under their
@@ -235,7 +235,7 @@ def trim_empty_nodes(parent_node: object, source_name: str) -> int:
                 fixed_cnt += 1
     return fixed_cnt
 
-def source_as_previouses(root_node: object, source_name: str):
+def source_as_previouses(root_node: ET.Element, source_name: str) -> list:
     """List source school appearances in students' school histories"""
     return  root_node.findall(
         # use " over ' in Xpath predicate because some school names include '
@@ -243,7 +243,7 @@ def source_as_previouses(root_node: object, source_name: str):
 
 def determine_output_path(input_path: str,
                           source_name: str,
-                          root_node: object) -> str:
+                          root_node: ET.Element) -> str:
     """Returns string of the relative path of the output file"""
     output_name = (input_path.rsplit('/', 1)[-1]
                    .replace('.', f'_{source_name}.'))
@@ -261,7 +261,7 @@ def config_parent_dir() -> str:
     except (FileNotFoundError, KeyError):
         return ''
 
-def get_output_dir(root: object) -> str:
+def get_output_dir(root: ET.Element) -> str:
     """Finds the name of the appropriate folder to store the outputted CTF in
 
     If the first student with a specified year is in year 6, returns the
@@ -276,7 +276,7 @@ def get_output_dir(root: object) -> str:
         return cohort_folder(12)
     return "CTF_In"
 
-def ac_year(root_node: object) -> int:
+def ac_year(root_node: ET.Element) -> int:
     """Returns the academic year of the first student under the passed node
     
     Raises:
@@ -293,7 +293,7 @@ def ac_year(root_node: object) -> int:
     ac_start_year = today.year - (1 if today.month < 9 else 0)
     return ac_start_year - year_started_school
 
-def are_joining_mid_year(root: object) -> bool:
+def are_joining_mid_year(root: ET.Element) -> bool:
     """Return True if students are joining next academic year (not this year)"""
     # List the nodes where the source school appears in a pupil's school history
     source_in_hists = source_as_previouses(root, source_school(root))
@@ -326,7 +326,7 @@ def escpd_next_ac_year() -> str:
     year = d.year
     return f'{year}_{year + 1}' if d.month < 10 else f'{year + 1}_{year + 2}'
 
-def source_school(root_node: object) -> str:
+def source_school(root_node: ET.Element) -> str:
     node = root_node.find(".//SourceSchool//SchoolName")
     return '' if node is None else node.text
 
@@ -336,7 +336,7 @@ def escape_source_school(source_school: str) -> str:
 def plural(count: int) -> str:
     return 's' if count > 1 else ''
 
-def add_xml_nodes_from_dict(parent: object, **kwargs: str):
+def add_xml_nodes_from_dict(parent: ET.Element, **kwargs: str):
     for key in kwargs:
         child = ET.SubElement(parent, key)
         child.text = kwargs[key]
