@@ -1,62 +1,59 @@
 import pytest # pylint: disable=import-error
 import xml.etree.ElementTree as ET
 
+from dicttoxml import dicttoxml # pylint: disable=import-error
+
 import parse_CTFs as parser # pylint: disable=import-error
 
-@pytest.fixture
-def title_case_nodes_dict() -> dict:
-    # Only 3 should be fixed: Forename, PreferredSurname, FormerSurname
-    return {
-        'Surname': { 'before': 'Surname', 'after': 'Surname' },
-        'Forename': { 'before': "D'FORENAME", 'after': "D'Forename" },
-        'PreferredSurname': { 'before': 'PREF. SURNAME',
-                              'after': 'Pref. Surname' },
-        'PreferredForename': { 'before': 'pRefeRred_ForEname',
-                               'after': 'pRefeRred_ForEname' },
-        'MiddleNames': { 'before': 'middle NAMES', 'after': 'middle NAMES' },
-        'FormerSurname': { 'before': 'FORMER-SURNAME',
-                           'after': 'Former-Surname' },
-        'SchoolName': { 'before': 'name of school', 'after': 'name of school' }
-    }
+OTHER_DICT = {
+    'Innocuously': 'nAmEd', 'Child': 'NODES', 'Should': { 'be': 'ignored' }
+}
+
+# Only 4 should be fixed:
+#   Forename, PreferredSurname, FormerSurname & nested SchoolName
+BEFORE = {
+    'Surname': 'Surname',
+    'Forename': "D'FORENAME",
+    'PreferredSurname': 'PREF. SURNAME',
+    'PreferredForename': 'pRefeRred_ForEname',
+    'MiddleNames': 'middle NAMES',
+    'FormerSurname': 'FORMER-SURNAME',
+    'SchoolName': 'name of school',
+    'nested': { 'SchoolName': 'NESTED SCHOOL NAME' }
+}
+AFTER = {
+    'Surname': 'Surname',
+    'Forename': "D'Forename",
+    'PreferredSurname': 'Pref. Surname',
+    'PreferredForename': 'pRefeRred_ForEname',
+    'MiddleNames': 'middle NAMES',
+    'FormerSurname': 'Former-Surname',
+    'SchoolName': 'name of school',
+    'nested': { 'SchoolName': 'Nested School Name' }
+}
 
 @pytest.fixture
-def title_case_nodes(title_case_nodes_dict) -> dict:
-    parent = ET.Element('parent')
-    parser.add_xml_nodes_from_dict(parent, **before_only(title_case_nodes_dict))
-    return parent
-
-def before_only(dict: dict) -> dict:
-    return {key:value['before'] for (key, value) in dict.items()}
+def other_nodes() -> ET.Element:
+    return ET.fromstring(dicttoxml(OTHER_DICT))
 
 @pytest.fixture
-def ok_nodes():
-    return { 'Innocuously': 'nAmEd', 'Child': 'NODES', 'Should': 'be ignored' }
+def case_change_and_other_nodes() -> ET.Element:
+    return ET.fromstring(dicttoxml({ **BEFORE, **OTHER_DICT }))
 
+def test_finds_no_case_change_nodes(other_nodes: ET.Element):
+    assert [] == parser.list_suspectly_cased_nodes(other_nodes)
 
-class TestUtilities:
-    def test_adds_nodes_from_dict(self, title_case_nodes_dict):
-        title_case_nodes = before_only(title_case_nodes_dict)
-        parent = ET.Element('parent')
-        parser.add_xml_nodes_from_dict(parent, **title_case_nodes)
-        for node_name in title_case_nodes:
-            assert title_case_nodes[node_name] == parent.findtext(node_name)
+def test_finds_case_change_nodes(case_change_and_other_nodes: ET.Element):
+    assert 8 == len(parser.list_suspectly_cased_nodes(
+        case_change_and_other_nodes
+    ))
 
-
-class TestCaseFixing:
-    def test_finds_no_title_case_nodes(self, ok_nodes):
-        parent = ET.Element('parent')
-        parser.add_xml_nodes_from_dict(parent, **ok_nodes)
-        assert [] == parser.list_suspectly_cased_nodes(parent)
-
-    def test_finds_title_case_nodes(self, title_case_nodes, ok_nodes):
-        parser.add_xml_nodes_from_dict(title_case_nodes, **ok_nodes)
-        # Add one duplicate to check duplicates are found
-        parser.add_xml_nodes_from_dict(title_case_nodes, Surname='2nd_surname')
-        assert 8 == len(parser.list_suspectly_cased_nodes(title_case_nodes))
-    
-    def test_only_fixes_allcaps_nodes(self,
-                                      title_case_nodes,
-                                      title_case_nodes_dict):
-        assert 3 == parser.repair_case_where_appropriate(title_case_nodes)
-        for (key, value) in title_case_nodes_dict.items():
-            assert value['after'] == title_case_nodes.findtext(key)
+def test_only_fixes_allcaps_nodes(case_change_and_other_nodes: ET.Element):
+    assert 4 == parser.repair_case_where_appropriate(
+        case_change_and_other_nodes
+    )
+    for (key, value) in AFTER.items():
+        if key == 'nested':
+            (key, value) = list(value.items())[0]
+            key = f"*/{key}"
+        assert value == case_change_and_other_nodes.findtext(key)

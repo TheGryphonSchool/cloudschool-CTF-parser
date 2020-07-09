@@ -336,11 +336,6 @@ def escape_source_school(source_school: str) -> str:
 def plural(count: int) -> str:
     return 's' if count > 1 else ''
 
-def add_xml_nodes_from_dict(parent: ET.Element, **kwargs: str):
-    for key in kwargs:
-        child = ET.SubElement(parent, key)
-        child.text = kwargs[key]
-
 if __name__ == '__main__':
     root = Tk()
     root.withdraw()
