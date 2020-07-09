@@ -73,7 +73,7 @@ def process_ctf(ctf_path: str) -> bool:
         return False
 
 def is_data_missing(root_node: ET.Element) -> bool:
-    """Checks whether a XML tree is a claims to be a `full` CTF file
+    """Checks whether a XML tree claims to be a `full` CTF file
 
     Args:
         root_node: XML Element, expected to be the root of a CTF file
