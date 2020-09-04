@@ -1,9 +1,4 @@
-import pytest # pylint: disable=import-error
-import xml.etree.ElementTree as ET
-
-from dicttoxml import dicttoxml # pylint: disable=import-error
-
-import parse_CTFs as parser # pylint: disable=import-error
+from test_helper import ET, dicttoxml, parser
 
 def test_full_file():
     assert False == parser.is_data_missing(
