@@ -227,19 +227,14 @@ def trim_empty_nodes(parent_node: ET.Element, source_name: str) -> int:
     """
 
     fixed_cnt = 0
-    for source_in_hist in source_as_previouses(parent_node, source_name):
+    for source_in_hist in source_school_appearances_in_history(parent_node,
+                                                               source_name):
         for tag in ['LeavingDate', 'RemovalGrounds']:
             bad_node = source_in_hist.find(tag)
             if bad_node and bad_node.text is None:
                 source_in_hist.remove(bad_node)
                 fixed_cnt += 1
     return fixed_cnt
-
-def source_as_previouses(root_node: ET.Element, source_name: str) -> list:
-    """List source school appearances in students' school histories"""
-    return  root_node.findall(
-        # use " over ' in Xpath predicate because some school names include '
-        f".//SchoolHistory/School/[SchoolName=\"{source_name}\"]")
 
 def determine_output_path(input_path: str,
                           source_name: str,
@@ -297,7 +292,8 @@ def ac_year(root_node: ET.Element) -> int:
 def are_joining_mid_year(root: ET.Element) -> bool:
     """Return True if students are joining next academic year (not this year)"""
     # List the nodes where the source school appears in a pupil's school history
-    source_in_hists = source_as_previouses(root, source_school(root))
+    source_in_hists = source_school_appearances_in_history(root,
+                                                           source_school(root))
     leaving_date_node = source_in_hists[0].find('.//LeavingDate')
     if leaving_date_node is not None and len(source_in_hists) > 1:
         leaving_date_1 = leaving_date_node.text
@@ -311,6 +307,13 @@ def are_joining_mid_year(root: ET.Element) -> bool:
             return False
     # Otherwise, ask
     return yes_no_q("Are these students joining MID-YEAR?")
+
+def source_school_appearances_in_history(root_node: ET.Element,
+                                         source_name: str) -> list:
+    """List source school appearances in students' school histories"""
+    return  root_node.findall(
+        # use " over ' in Xpath predicate because some school names include '
+        f".//SchoolHistory/School/[SchoolName=\"{source_name}\"]")
 
 def cohort_folder(year_group: int) -> str:
     """Returns the (conventional) name of the folder for the next yr 7 cohort"""
