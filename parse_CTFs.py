@@ -282,7 +282,8 @@ def ac_year(root_node: ET.Element) -> int:
 
     dob_node = root_node.find('.//Pupil/DOB')
     if dob_node is None:
-        raise ValueError('Pupils are missing their DOBs; this CTF is invalid')
+        # returning 0 will mean the CTF is placed in the default output dir
+        return 0
     dob = date.fromisoformat(dob_node.text)
     year_started_school = dob.year + (4 if dob.month < 9 else 5)
     ctf_date = ctf_creation_date(root_node)
