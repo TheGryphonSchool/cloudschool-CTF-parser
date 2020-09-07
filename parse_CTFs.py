@@ -257,20 +257,21 @@ def config_parent_dir() -> str:
     except (FileNotFoundError, KeyError):
         return ''
 
-def get_output_dir(root: ET.Element) -> str:
+def get_output_dir(root: ET.Element, default_dir: str = 'CTF_In') -> str:
     """Finds the name of the appropriate folder to store the outputted CTF in
 
     If the first student with a specified year is in year 6, returns the
     new-cohort folder for this year, otherwise returns in-year folder: 'CTF_In' 
     Falls back on calculating a student's year if all year tags are missing.
     """
+
     year_group = root.find('.//NCyearActual')
     year_group = ac_year(root) if year_group is None else int(year_group.text)
     if year_group == 6:
         return cohort_folder(7)
     if year_group == 11 and not are_joining_mid_year(root):
         return cohort_folder(12)
-    return "CTF_In"
+    return default_dir
 
 def ac_year(root_node: ET.Element) -> int:
     """Returns the academic year of the first student under the passed node
@@ -291,21 +292,27 @@ def ac_year(root_node: ET.Element) -> int:
     return ac_start_year - year_started_school
 
 def are_joining_mid_year(root: ET.Element) -> bool:
-    """Return True if students are joining next academic year (not this year)"""
+    """Return True if students are joining this academic year (not next year)
+    
+    This need only be called for year 11s - the only ambiguous case.
+    """
+
     # List the nodes where the source school appears in a pupil's school history
     source_in_hists = source_school_appearances_in_history(root,
                                                            source_school(root))
-    leaving_date_node = source_in_hists[0].find('.//LeavingDate')
-    if leaving_date_node is not None and len(source_in_hists) > 1:
-        leaving_date_1 = leaving_date_node.text
-        # Assume mid-year if any students' LeavingDate nodes have different values
-        for source_in_hist in source_in_hists:
-            this_l_d = source_in_hist.find('LeavingDate')
-            if this_l_d is not None and this_l_d.text != leaving_date_1:
-                return True
-        # Assume next cohort if LeavingDates are after May and before September
-        if date.fromisoformat(leaving_date_1).month % 9 > 5:
-            return False
+    if len(source_in_hists) > 0:
+        leaving_date_node = source_in_hists[0].find('.//LeavingDate')
+        if leaving_date_node is not None:
+            leaving_date = leaving_date_node.text
+            # Assume next cohort if LeavingDates are after May & before Sep
+            if date.fromisoformat(leaving_date).month % 9 > 5:
+                return False
+            if len(source_in_hists) > 1:
+                # Assume mid-year if any students' LeavingDates differ
+                for source_in_hist in source_in_hists:
+                    this_l_d = source_in_hist.find('LeavingDate')
+                    if this_l_d is not None and this_l_d.text != leaving_date:
+                        return True
     # Otherwise, ask
     return yes_no_q("Are these students joining MID-YEAR?")
 
@@ -317,7 +324,14 @@ def source_school_appearances_in_history(root_node: ET.Element,
         f".//SchoolHistory/School/[SchoolName=\"{source_name}\"]")
 
 def cohort_folder(year_group: int) -> str:
-    """Returns the (conventional) name of the folder for the next yr 7 cohort"""
+    """The path of the dir containing the CTFs for the next yr 7 or 12 cohort
+
+    Args:
+        year_group: Expected to be 7 or 12
+    Returns:
+        Fullpath (as String) of the directory conventionally containing CTFs for
+        the incoming cohort of year 7s or 12s."""
+    
     return f'CTF_Year{year_group:02}_{escpd_next_ac_year()}'
 
 def escpd_next_ac_year() -> str:
