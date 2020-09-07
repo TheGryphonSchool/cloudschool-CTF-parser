@@ -285,8 +285,8 @@ def ac_year(root_node: ET.Element) -> int:
         raise ValueError('Pupils are missing their DOBs; this CTF is invalid')
     dob = date.fromisoformat(dob_node.text)
     year_started_school = dob.year + (4 if dob.month < 9 else 5)
-    today = date.today()
-    ac_start_year = today.year - (1 if today.month < 9 else 0)
+    ctf_date = ctf_creation_date(root_node)
+    ac_start_year = ctf_date.year - (1 if ctf_date.month < 9 else 0)
     return ac_start_year - year_started_school
 
 def are_joining_mid_year(root: ET.Element) -> bool:
@@ -339,6 +339,10 @@ def escape_source_school(source_school: str) -> str:
 
 def plural(count: int) -> str:
     return 's' if count > 1 else ''
+
+def ctf_creation_date(root_node: ET.Element) -> date:
+    datetime = root_node.find('.//DateTime').text
+    return date.fromisoformat(datetime[0:datetime.find('T')])
 
 if __name__ == '__main__':
     root = Tk()
