@@ -60,7 +60,7 @@ def process_ctf(ctf_path: str) -> bool:
             print(f"Trimmed {fixed_empties} empty field{plural(fixed_empties)}")
         if fixed_phone_numbers > 0:
             print(f"Removed whitespace from {fixed_phone_numbers}" +
-                  f"phone number{plural(fixed_phone_numbers)}")
+                  f" phone number{plural(fixed_phone_numbers)}")
         if fixed_surnames > 0:
             s = plural(fixed_surnames)
             print(f"Replaced {fixed_surnames} surname{s} with legal surname{s}")
