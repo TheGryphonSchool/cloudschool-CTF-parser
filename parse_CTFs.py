@@ -177,10 +177,10 @@ def ensure_surnames_are_legal(tree: ET.Element) -> int:
     During import, progresso maps Surname nodes to the Legal Surname field,
     and PreferredSurname nodes to the Surname field. Some schools may not like
     this behaviour and prefer to use the Surname node value for everything.
-    If a Pupil record is missing the Surname or PreferredSurname node, it will
-    be created, copying the value from the present node.
+    If a Pupil record is missing the Surname or PreferredSurname node, this
+    function creates it by copying the value from the present node.
     Args:
-        tree: An XML node whose descendents may include Surname and
+        tree: An XML node whose descendents may include Surname and/or
             PreferredSurname nodes
     Returns:
         Integer count of the number of nodes updated or created
@@ -191,7 +191,7 @@ def ensure_surnames_are_legal(tree: ET.Element) -> int:
 
     fixed_count = 0
     nameless_UPNs = []
-    all_pupils = tree.findall('.//Pupil')
+    all_pupils = tree.findall('.//BasicDetails')
     fixed_count = len(all_pupils)
     for pupil_node in all_pupils:
         surname_tags = ['Surname', 'PreferredSurname']
