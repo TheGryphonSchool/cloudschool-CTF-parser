@@ -53,7 +53,7 @@ def process_ctf(ctf_path: str) -> bool:
     try:
         escpd_src_name = escape_source_school(source_name)
         output_path = determine_output_path(ctf_path, escpd_src_name, root_node)
-        tree.write(output_path)
+        tree.write(output_path, encoding='UTF-8', xml_declaration=True)
         if fixed_cases > 0:
             print(f"Case fixed for {fixed_cases} name{plural(fixed_cases)}")
         if fixed_empties > 0:
