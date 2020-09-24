@@ -5,18 +5,18 @@ CORRECT_SURNAME = 'Rightname'
 NON_ERROR_PUPILS = {
     'Constant': { 'Pupil': {
         'Surname': CORRECT_SURNAME,
-        'PreferredSurname': CORRECT_SURNAME
+        'BasicDetails': { 'PreferredSurname': CORRECT_SURNAME }
     } },
-    'Change': { 'Pupil': { 'BasicDetails': {
+    'Change': { 'Pupil': {
         'Surname': CORRECT_SURNAME,
-        'PreferredSurname': 'Wrongname'
-        } } },
+        'BasicDetails': { 'PreferredSurname': 'Wrongname' }
+        } },
     'SurnameMissing': { 'Pupil': { 'BasicDetails': {
         'PreferredSurname': CORRECT_SURNAME
     } } },
-    'PreferredSurnameMissing': { 'Pupil': { 'BasicDetails': {
-        'Surname': CORRECT_SURNAME
-    } } },
+    'PreferredSurnameMissing': { 'Pupil': {
+        'BasicDetails': {}, 'Surname': CORRECT_SURNAME
+    } },
     'Irrelevent': { 'Should': 'Ignore' }
 }
 

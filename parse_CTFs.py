@@ -164,12 +164,12 @@ def remove_spaces_from_phone_numbers(xml_tree: ET.Element) -> int:
     Returns:
         count of the phone numbers with spaces in that have been removed
     """
-    fixed_count = 0
+    fix_count = 0
     for phone_node in xml_tree.findall('.//PhoneNo'):
         if phone_node.text.find(' ') >= 0:
-            fixed_count += 1
+            fix_count += 1
             phone_node.text = phone_node.text.replace(' ', '')
-    return fixed_count
+    return fix_count
 
 def ensure_surnames_are_legal(tree: ET.Element) -> int:
     """Overwrites PreferredSurname nodes with Surnames if they differ
@@ -189,27 +189,36 @@ def ensure_surnames_are_legal(tree: ET.Element) -> int:
             the CTF if this is the case.
     """
 
-    fixed_count = 0
+    fix_count = 0
     nameless_UPNs = []
-    all_pupils = tree.findall('.//BasicDetails')
-    fixed_count = len(all_pupils)
+    all_pupils = tree.findall('.//Pupil')
+    fix_count = len(all_pupils)
+    if not fix_count:
+        return 0
     for pupil_node in all_pupils:
-        surname_tags = ['Surname', 'PreferredSurname']
-        surname_nodes = [pupil_node.find(tag) for tag in surname_tags]
-        missing = [i for i, x in enumerate(surname_nodes) if x is None]
-        if len(missing) == 2:
-            nameless_UPNs.append(pupil_node.find('UPN').text)
-        elif len(missing) == 1:
-            new_name_node = ET.SubElement(pupil_node, surname_tags[missing[0]])
-            new_name_node.text = surname_nodes[missing[0] ^ 1].text
-        elif surname_nodes[1].text != surname_nodes[0].text:
-            surname_nodes[1].text = surname_nodes[0].text
+        surname_node = pupil_node.find('Surname')
+        pref_surname_node = pupil_node.find('./BasicDetails/PreferredSurname')
+        if surname_node is not None and pref_surname_node is not None:
+            if surname_node.text != pref_surname_node.text:
+                pref_surname_node.text = surname_node.text
+            else:
+                fix_count -= 1
+        elif surname_node is not None:
+            pref_surname_node = ET.SubElement(pupil_node.find('BasicDetails'),
+                                              'PreferredSurname')
+            pref_surname_node.text = surname_node.text
+        elif pref_surname_node is not None:
+            surname_node = ET.SubElement(pupil_node, 'Surname')
+            surname_node.text = pref_surname_node.text
         else:
-            fixed_count -= 1
+            # Neither Surname nor Preferred Surname found -> error
+            upn_node = pupil_node.find('.//UPN')
+            upn = 'UPN-missing' if upn_node is None else upn_node.text
+            nameless_UPNs.append(upn)
     if len(nameless_UPNs) > 0:
         raise ValueError('Students with these UPNs have no surnames: ' +
             f"{ ', '.join(nameless_UPNs) }. This CTF is invalid.")
-    return fixed_count
+    return fix_count
 
 def trim_empty_nodes(parent_node: ET.Element, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
