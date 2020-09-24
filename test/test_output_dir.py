@@ -1,4 +1,4 @@
-from test_helper import parser, ET, dicttoxml, pytest, mocker, MockerFixture
+from test_setup import parser, ET, dicttoxml, pytest, mocker, MockerFixture
 from datetime import date
 
 @pytest.fixture

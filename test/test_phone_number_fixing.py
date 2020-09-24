@@ -1,4 +1,4 @@
-from test_helper import pytest, ET, dicttoxml, parser
+from test_setup import pytest, ET, dicttoxml, parser
 
 CORRECT_NUMBER = '07835979025'
 

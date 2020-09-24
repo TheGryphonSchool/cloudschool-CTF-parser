@@ -1,4 +1,4 @@
-from test_helper import pytest, ET, dicttoxml, parser
+from test_setup import pytest, ET, dicttoxml, parser
 
 OTHER_DICT = {
     'Innocuously': 'nAmEd', 'Child': 'NODES', 'Should': { 'be': 'ignored' }

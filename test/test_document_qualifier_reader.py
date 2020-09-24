@@ -1,4 +1,4 @@
-from test_helper import ET, dicttoxml, parser
+from test_setup import ET, dicttoxml, parser
 
 def test_full_file():
     assert False == parser.is_data_missing(
