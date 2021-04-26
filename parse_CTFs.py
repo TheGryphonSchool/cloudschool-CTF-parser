@@ -32,7 +32,7 @@ def process_ctf(ctf_path: str) -> bool:
         # Prepare XML tree
         tree = ET.parse(ctf_path)
         root_node = tree.getroot()
-        source_name = source_school(root_node)
+        source_name = get_source_school(root_node)
 
         if is_data_missing(root_node) and yes_no_q("Do you want to abort?"):
             return False
@@ -317,7 +317,7 @@ def are_joining_mid_year(root: ET.Element) -> bool:
 
     # List the nodes where the source school appears in a pupil's school history
     source_in_hists = source_school_appearances_in_history(root,
-                                                           source_school(root))
+                                                           get_source_school(root))
     if len(source_in_hists) > 0:
         leaving_date_node = source_in_hists[0].find('.//LeavingDate')
         if leaving_date_node is not None:
@@ -367,7 +367,7 @@ def escpd_next_ac_year() -> str:
     return f'{year}_{year + 1}' if d.month < 10 else f'{year + 1}_{year + 2}'
 
 
-def source_school(root_node: ET.Element) -> str:
+def get_source_school(root_node: ET.Element) -> str:
     node = root_node.find(".//SourceSchool//SchoolName")
     return '' if node is None else node.text
 
@@ -386,8 +386,8 @@ def ctf_creation_date(root_node: ET.Element) -> date:
 
 
 if __name__ == '__main__':
-    root = Tk()
-    root.withdraw()
+    tk_root = Tk()
+    tk_root.withdraw()
     ctf_s = filedialog.askopenfilenames(initialdir="..",
                                         title="Select CTFs",
                                         filetypes=(("xml files", "*.xml"),))
@@ -404,10 +404,12 @@ if __name__ == '__main__':
         else:
             if good_count > 0:
                 print(
-                    f'{good_count} file{plural(good_count)} processed successfully.')
-                all = ''
+                    f'{good_count} file{plural(good_count)} processed successfully.'
+                )
+                prep = ''
             else:
-                all = 'all ' if out_count > 1 else 'the '
+                prep = 'all ' if out_count > 1 else 'the '
             print(
-                f'Parsing FAILED for {all}{bad_count} file{plural(bad_count)}.')
+                f'Parsing FAILED for {prep}{bad_count} file{plural(bad_count)}.'
+            )
     input('Press Enter to Exit... ')
