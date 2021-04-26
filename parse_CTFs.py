@@ -1,7 +1,6 @@
 import re
 import os
 import json
-import traceback
 
 from tkinter import Tk, filedialog
 import xml.etree.ElementTree as ET
@@ -45,11 +44,8 @@ def process_ctf(ctf_path: str) -> bool:
         fixed_phone_numbers = remove_spaces_from_phone_numbers(root_node)
 
         fixed_surnames = ensure_surnames_are_legal(root_node)
-    except Exception as _e:
-        traceback.print_exc()
 
-    # Write the new file, rename the original and tell the user what's happened
-    try:
+        # Write the new file, rename the original and tell the user what's happened
         escpd_src_name = escape_source_school(source_name)
         output_path = determine_output_path(ctf_path, escpd_src_name, root_node)
         tree.write(output_path, encoding='UTF-8', xml_declaration=True)
@@ -67,6 +63,9 @@ def process_ctf(ctf_path: str) -> bool:
         os.rename(ctf_path,
                   ctf_path.replace('.', f'_{escpd_src_name}_original.'))
         return True
+    except ET.ParseError as parse_error:
+        print("ERROR. Are you sure this file is a CTF?")
+        print(parse_error.msg)
     except ValueError as err:
         print('CTF parsing error:', err, '\n')
         return False
