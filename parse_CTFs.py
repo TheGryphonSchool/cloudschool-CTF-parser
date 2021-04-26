@@ -193,7 +193,6 @@ def ensure_surnames_are_legal(tree: ET.Element) -> int:
             the CTF if this is the case.
     """
 
-    fix_count = 0
     nameless_UPNs = []
     all_pupils = tree.findall('.//Pupil')
     fix_count = len(all_pupils)
