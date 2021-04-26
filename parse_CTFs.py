@@ -136,7 +136,7 @@ def repair_case_where_appropriate(parent_node: ET.Element) -> int:
     fixed_cnt = 0
     for name_node in list_suspectly_cased_nodes(parent_node):
         name = name_node.text
-        if name is not None and re.match(r'[A-Z\.\'\-\s]+$', name):
+        if name is not None and re.match(r'[A-Z.\'\-\s]+$', name):
             name_node.text = name.title()
             fixed_cnt += 1
     return fixed_cnt
