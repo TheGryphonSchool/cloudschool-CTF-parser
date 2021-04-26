@@ -1,40 +1,40 @@
 import re
 import os
 import json
+import traceback
 
 from tkinter import Tk, filedialog
 import xml.etree.ElementTree as ET
 from datetime import date
 
+
 def process_ctf(ctf_path: str) -> bool:
     """Parse the XML tree, call patching methods and write repaired CTF
-    
+
     Tries to open CTF file presumend to be at passed path. Checks whether CTF
     is complete and asks the user whether they want to abort if not.
     Finds the appropriate location and writes a new, fixed CTF there. The
     original is unchanged, but renamed
     Delegates:
-    Removing any optional nodes that are empty 
+    Removing any optional nodes that are empty
     Making proper names proper case
 
     Args:
         ctf_path: The full path of the CTF file to be processed
-    
+
     Returns:
         A Boolean indicating whether the process was successful (Explicit
         abortion by the user is still considered unsuccessful).
     """
 
-    import traceback
-
     print('Parsing', ctf_path.rsplit('/', 1)[-1], '...')
-    
+
     try:
         # Prepare XML tree
         tree = ET.parse(ctf_path)
         root_node = tree.getroot()
         source_name = source_school(root_node)
-        
+
         if is_data_missing(root_node) and yes_no_q("Do you want to abort?"):
             return False
 
@@ -47,7 +47,6 @@ def process_ctf(ctf_path: str) -> bool:
         fixed_surnames = ensure_surnames_are_legal(root_node)
     except Exception as _e:
         traceback.print_exc()
-        
 
     # Write the new file, rename the original and tell the user what's happened
     try:
@@ -72,12 +71,13 @@ def process_ctf(ctf_path: str) -> bool:
         print('CTF parsing error:', err, '\n')
         return False
 
+
 def is_data_missing(root_node: ET.Element) -> bool:
     """Checks whether a XML tree claims to be a `full` CTF file
 
     Args:
         root_node: XML Element, expected to be the root of a CTF file
-    
+
     Returns:
         False if a DocumentQualifier node is found with value `full`, else True
     """
@@ -85,7 +85,7 @@ def is_data_missing(root_node: ET.Element) -> bool:
     doc_qual = root_node.findtext('.//DocumentQualifier')
     if doc_qual is None:
         print("File is missing its DocumentQualifier tag; import will"
-	      " likely fail.")
+              " likely fail.")
         return True
 
     if doc_qual == 'full':
@@ -100,6 +100,7 @@ def is_data_missing(root_node: ET.Element) -> bool:
           "fail.")
     return True
 
+
 def yes_no_q(question: str) -> bool:
     """Asks user a yes/no question 3 times, assumes no on 3rd failure
 
@@ -110,7 +111,7 @@ def yes_no_q(question: str) -> bool:
         Boolean representing the user's choice, or False if they fail 3 times
         to answer with a 'y' or 'no'.
     """
-    
+
     yes_regex = re.compile('[yY]')
     no_regex = re.compile('[nN]')
     attempts = 0
@@ -121,6 +122,7 @@ def yes_no_q(question: str) -> bool:
 
         if no_regex.search(user_choice):
             return False
+
 
 def repair_case_where_appropriate(parent_node: ET.Element) -> int:
     """Title case any upper-case names under the passed node
@@ -140,9 +142,10 @@ def repair_case_where_appropriate(parent_node: ET.Element) -> int:
             fixed_cnt += 1
     return fixed_cnt
 
+
 def list_suspectly_cased_nodes(parent_node: ET.Element) -> list:
     """Returns list of child nodes containing proper names
-    
+
     Args:
         parent_node: An XML node that may contain child-nodes containing
             proper names
@@ -156,9 +159,10 @@ def list_suspectly_cased_nodes(parent_node: ET.Element) -> list:
         name_nodes += parent_node.findall('.//' + tag)
     return name_nodes
 
+
 def remove_spaces_from_phone_numbers(xml_tree: ET.Element) -> int:
     """Removes all padding and internal spaces from nodes named 'PhoneNo'
-    
+
     Args:
         xml_tree: An XML node that may have children with 'PhoneNo' tags
     Returns:
@@ -171,9 +175,10 @@ def remove_spaces_from_phone_numbers(xml_tree: ET.Element) -> int:
             phone_node.text = phone_node.text.replace(' ', '')
     return fix_count
 
+
 def ensure_surnames_are_legal(tree: ET.Element) -> int:
     """Overwrites PreferredSurname nodes with Surnames if they differ
-    
+
     During import, progresso maps Surname nodes to the Legal Surname field,
     and PreferredSurname nodes to the Surname field. Some schools may not like
     this behaviour and prefer to use the Surname node value for everything.
@@ -217,8 +222,9 @@ def ensure_surnames_are_legal(tree: ET.Element) -> int:
             nameless_UPNs.append(upn)
     if len(nameless_UPNs) > 0:
         raise ValueError('Students with these UPNs have no surnames: ' +
-            f"{ ', '.join(nameless_UPNs) }. This CTF is invalid.")
+                         f"{', '.join(nameless_UPNs)}. This CTF is invalid.")
     return fix_count
+
 
 def trim_empty_nodes(parent_node: ET.Element, source_name: str) -> int:
     """Remove any empty LeavingDate and RemovalGrounds nodes
@@ -245,6 +251,7 @@ def trim_empty_nodes(parent_node: ET.Element, source_name: str) -> int:
                 fixed_cnt += 1
     return fixed_cnt
 
+
 def determine_output_path(input_path: str,
                           source_name: str,
                           root_node: ET.Element) -> str:
@@ -256,6 +263,7 @@ def determine_output_path(input_path: str,
     os.makedirs(output_dir, exist_ok=True)
     return os.path.join(output_dir, output_name)
 
+
 def config_parent_dir() -> str:
     try:
         full_path = os.path.join(os.path.dirname(__file__),
@@ -266,11 +274,12 @@ def config_parent_dir() -> str:
     except (FileNotFoundError, KeyError):
         return ''
 
+
 def get_output_dir(root: ET.Element, default_dir: str = 'CTF_In') -> str:
     """Finds the name of the appropriate folder to store the outputted CTF in
 
     If the first student with a specified year is in year 6, returns the
-    new-cohort folder for this year, otherwise returns in-year folder: 'CTF_In' 
+    new-cohort folder for this year, otherwise returns in-year folder: 'CTF_In'
     Falls back on calculating a student's year if all year tags are missing.
     """
 
@@ -282,9 +291,10 @@ def get_output_dir(root: ET.Element, default_dir: str = 'CTF_In') -> str:
         return cohort_folder(12)
     return default_dir
 
+
 def ac_year(root_node: ET.Element) -> int:
     """Returns the academic year of the first student under the passed node
-    
+
     Raises:
         ValueError if any students don't have DOBs. The MIS will not accept the
             CTF if this is the case.
@@ -300,9 +310,10 @@ def ac_year(root_node: ET.Element) -> int:
     ac_start_year = ctf_date.year - (1 if ctf_date.month < 9 else 0)
     return ac_start_year - year_started_school
 
+
 def are_joining_mid_year(root: ET.Element) -> bool:
     """Return True if students are joining this academic year (not next year)
-    
+
     This need only be called for year 11s - the only ambiguous case.
     """
 
@@ -325,12 +336,14 @@ def are_joining_mid_year(root: ET.Element) -> bool:
     # Otherwise, ask
     return yes_no_q("Are these students joining MID-YEAR?")
 
+
 def source_school_appearances_in_history(root_node: ET.Element,
                                          source_name: str) -> list:
     """List source school appearances in students' school histories"""
-    return  root_node.findall(
+    return root_node.findall(
         # use " over ' in Xpath predicate because some school names include '
         f".//SchoolHistory/School/[SchoolName=\"{source_name}\"]")
+
 
 def cohort_folder(year_group: int) -> str:
     """The path of the dir containing the CTFs for the next yr 7 or 12 cohort
@@ -340,8 +353,9 @@ def cohort_folder(year_group: int) -> str:
     Returns:
         Fullpath (as String) of the directory conventionally containing CTFs for
         the incoming cohort of year 7s or 12s."""
-    
+
     return f'CTF_Year{year_group:02}_{escpd_next_ac_year()}'
+
 
 def escpd_next_ac_year() -> str:
     """eg Aug '19 and Sep '19 give 2019_2020, but Oct '19 gives 2020_2021
@@ -349,31 +363,36 @@ def escpd_next_ac_year() -> str:
     Desirable because occasionally we get CTFs in September for members of new
     cohort who already started that month.
     """
-    
+
     d = date.today()
     year = d.year
     return f'{year}_{year + 1}' if d.month < 10 else f'{year + 1}_{year + 2}'
+
 
 def source_school(root_node: ET.Element) -> str:
     node = root_node.find(".//SourceSchool//SchoolName")
     return '' if node is None else node.text
 
+
 def escape_source_school(source_school: str) -> str:
     return source_school.casefold().replace(' ', '_').replace('.', '')
 
+
 def plural(count: int) -> str:
     return 's' if count > 1 else ''
+
 
 def ctf_creation_date(root_node: ET.Element) -> date:
     datetime = root_node.find('.//DateTime').text
     return date.fromisoformat(datetime[0:datetime.find('T')])
 
+
 if __name__ == '__main__':
     root = Tk()
     root.withdraw()
-    ctf_s = filedialog.askopenfilenames(initialdir = "..",
-                                        title = "Select CTFs",
-                                        filetypes = (("xml files", "*.xml"),))
+    ctf_s = filedialog.askopenfilenames(initialdir="..",
+                                        title="Select CTFs",
+                                        filetypes=(("xml files", "*.xml"),))
     if len(ctf_s) == 0:
         print("CTF parsing aborted")
     else:
@@ -386,9 +405,11 @@ if __name__ == '__main__':
             print(f"All ({out_count}) files processed successfully")
         else:
             if good_count > 0:
-                print(f'{good_count} file{plural(good_count)} processed successfully.')
+                print(
+                    f'{good_count} file{plural(good_count)} processed successfully.')
                 all = ''
             else:
                 all = 'all ' if out_count > 1 else 'the '
-            print(f'Parsing FAILED for {all}{bad_count} file{plural(bad_count)}.')
+            print(
+                f'Parsing FAILED for {all}{bad_count} file{plural(bad_count)}.')
     input('Press Enter to Exit... ')
